@@ -1,0 +1,179 @@
+Installing Arch Linux in VMWare
+
+!ping google
+	
+	ping google.com
+	
+	(if you can't ping google and in a VM, setup NAT)
+	(if using dedicated hardware wifi adapter use command: wifi-menu)
+		
+	
+!check disks
+	
+	lsblk
+	
+	
+!run gdisk to create partitions
+	
+	gdisk /dev/sda
+	
+	(boot partition = sda1 / +512M / default filesystem type)
+	(BIOS partition = sda2 / +1MB / EF02 BIOS filesystem type)
+	(root partition = sda3 / ALL / default filesystem type)
+	(write partitions and exit)
+
+	
+!format partitions with ext4 filesystem
+
+	mkfs.ext4 /dev/sda1
+	mkfs.ext4 /dev/sda3
+
+	
+!mount partitions
+
+	mount /dev/sda3 /mnt
+	mkdir /mnt/boot
+	mount /dev/sda1 boot
+
+!create mirrorlist 
+
+	nano /etc/pacman.d/mirrorlist 
+	
+	(remove comments for mirrors you would like to use)
+	(if nothing exists here, you can generate your own at https://www.archlinux.org/mirrorlist)
+		
+	Server = http://mirrors.sonic.net/archlinux/$repo/os/$arch
+	Server = https://mirrors.sonic.net/archlinux/$repo/os/$arch
+	
+	(write and exit)
+	
+
+!update pacman
+
+	pacman -Syy
+	
+
+!use pacstrap script to install base, and linux-firmware and nano and vim
+
+	pacstrap /mnt base linux linux-firmware nano vim
+
+
+!generate fstab
+
+	genfstab -U /mnt >> /mnt/etc/fstab
+	
+
+!chroot into the new os 
+
+	arch-chroot /mnt
+	
+	
+!set timezone
+
+	timedatectl set-timezone America/Los_Angeles
+	
+	(if you want to pick something else you can list options with timedatectl list-timezones)
+	
+
+!set locale
+
+	nano /etc/locale.conf
+	
+	(add: LANG="en_US.UTF-8")
+	(save)
+	
+	nano /etc/local.gen
+	
+	(uncomment both en_US*)
+	(save)
+	
+	locale-gen
+	export LANG=en_US.UTF-8
+	
+
+!hostname
+
+	echo whatevername > /etc/hostname
+	
+	touch /etc/hosts
+	
+	nano /etc/hosts
+	
+	(add the following)
+	
+	127.0.0.1	localhost
+	::1		localhost
+	127.0.1.1	whatevername
+	
+	(save)
+	
+
+!setup root password
+
+	passwd
+	
+	
+!make it boot!
+
+	pacman -S grub
+	grub-install --target=i386-pc /dev/sda
+	grub-mkconfig -o /boot/grub/grub.cfg
+	
+
+!install dhcpdc
+
+	sudo pacman -S dhcpcd
+
+
+!create user
+
+	useradd deadpan -m -G wheel
+	
+	
+!unmount and shutdown bitach
+
+	exit
+	umount /mnt/boot
+	cd ..
+	umount /mnt
+	shutdown now -r
+
+
+!LOGIN!
+
+
+!Setup sudoers
+
+	su
+	ls -s /usr/bin/vim /usr/bin/vi
+	sudo /etc/sudoers
+	
+
+!install xorg
+
+	sudo pacman -S xorg xorg-server
+	
+	sudo pacman -S gnome
+	
+	
+!run gnome
+
+	sudo systemctl start gdm.service
+	
+	(if you want to boot automatically into gnome use systemctl enable)
+	
+
+!enable dhcp service
+
+	sudo systemctl enable dhcpcd.service
+	
+
+!upgrade pacman and system
+
+	sudo pacman -Syy
+	sudo pacman -Syu
+	
+	
+
+	
+	
